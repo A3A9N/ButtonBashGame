@@ -1,19 +1,24 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
     public float speed = 0f;
     public float maxSpeed = 10f;
-    public float acceleration = 0.5f;
+    public float accelerationPerTap = 1f;
     public float deceleration = 1f;
     public Animator animator;
     public bool isRunning = false;
     public float timer = 10f; 
+    public float tapCooldown = 0.1f;
+    private float lastTapTime = 0f;
+    public Transform finishLine;
 
     private bool gameOver = false;
 
+    private void Start()
+    {
+        FinishLineController.OnPlayerWin += OnFinish;
+    }
     void Update()
     {
         if (!gameOver)
@@ -23,29 +28,38 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    void OnFinish()
+    {
+
+
+    }
+
     void HandleInput()
     {
         
-        if (Input.GetKey(KeyCode.Space)) // Of voor toetsenbord: Input.GetKey(KeyCode.Space)
+        if (Input.GetMouseButtonDown(0)) // Of voor toetsenbord: Input.GetKeyDown(KeyCode.Space)
         {
-            isRunning = true;
-            speed += acceleration * Time.deltaTime;
-            speed = Mathf.Clamp(speed, 0, maxSpeed);
-        }
-        else
-        {
-            isRunning = false;
-            speed -= deceleration * Time.deltaTime;
-            if (speed < 0)
+            if (Time.time - lastTapTime > tapCooldown) 
             {
-                speed = 0;
+                isRunning = true;
+                speed += accelerationPerTap;
+                speed = Mathf.Clamp(speed, 0, maxSpeed); 
+                lastTapTime = Time.time;
             }
         }
 
-       
+     
+        if (Time.time - lastTapTime > tapCooldown && !Input.GetMouseButton(0))
+        {
+            speed -= deceleration * Time.deltaTime;
+            speed = Mathf.Clamp(speed, 0, maxSpeed); 
+            isRunning = speed > 0; 
+        }
+
+     
         animator.SetBool("isRunning", isRunning);
 
-       
+      
         transform.Translate(Vector3.right * speed * Time.deltaTime);
     }
 
@@ -56,7 +70,7 @@ public class PlayerController : MonoBehaviour
             timer -= Time.deltaTime;
             if (timer <= 0)
             {
-                GameOver(false);
+                GameOver(false); 
             }
         }
     }
@@ -65,6 +79,7 @@ public class PlayerController : MonoBehaviour
     {
         if (other.CompareTag("Finish"))
         {
+            Debug.Log("Finish bereikt!");   
             GameOver(true); 
         }
     }
@@ -83,4 +98,3 @@ public class PlayerController : MonoBehaviour
         }
     }
 }
-
